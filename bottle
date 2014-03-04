@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Usage: $ bottle <formula> <bucket>
+
+./build.sh -f $1 -p ./python -x $1.tar.bz2 -r $2
