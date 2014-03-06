@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Usage: $ build.sh <output-dir>
+
+OUT_PREFIX=$1
+SOURCE_TARBALL='ftp://sourceware.org/pub/libffi/libffi-3.0.13.tar.gz'
+
+curl $SOURCE_TARBALL | tar xz
+# jx
+mv libffi-3.0.13 libffi
+
+cd libffi
+./configure --prefix=$OUT_PREFIX
+make
+make install
+
+# Cleanup
+cd ..
+rm -fr libffi
