@@ -11,7 +11,8 @@ except ImportError:
 
 deps = [
     'boto',
-    'docopt'
+    'docopt',
+    'envoy'
 ]
 
 setup(

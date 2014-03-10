@@ -1,29 +1,69 @@
 # -*- coding: utf-8 -*-
 
-"""Usage: bob [-vqrh] [FILE] ...
-          bob (--left | --right) CORRECTION FILE
+"""Usage: bob build <formula>
+       bob deploy <formula>
 
-Process FILE and optionally apply correction to either left-hand side or
-right-hand side.
-
-Arguments:
-  FILE        optional input file
-  CORRECTION  correction angle, needs FILE, --left or --right to be present
+Build formula and optionally deploy it.
 
 Options:
-  -h --help
-  -v       verbose mode
-  -q       quiet mode
-  -r       make report
-  --left   use left-hand side
-  --right  use right-hand side
+    -h --help
+    --no-deps  skip dependency cascading.
 
+Configuration:
+    Environment Variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET
 """
+import os
+
 from docopt import docopt
+from .models import Formula
+
+
+
+def build(formula):
+
+    f = Formula(path=formula)
+
+    try:
+        assert f.exists
+    except AssertionError:
+        print 'Formula {} doesn\'t appear to exist.'.format(formula)
+        exit(1)
+
+    print 'Building {}'.format(formula)
+
+    # Dependency metadata, extracted from bash comments.
+    deps = f.depends_on
+    print
+
+    if deps:
+        print 'Resolving dependencies... found {}:'.format(len(deps))
+
+        for dep in deps:
+            print ' - {}'.format(dep)
+
+    print
+
+    f.build()
+
+
+    # Isolate /app
+    # Execute a build
+    # Tarball
+    # Upload to an s3 bucket
+    # Then, sidestep.
+
 
 
 def dispatch():
-    print 'welcome to bob!'
-    print
-    arguments = docopt(__doc__)
-    print(arguments)
+
+    args = docopt(__doc__)
+
+    formula = args['<formula>']
+    do_build = args['build']
+    do_deploy = args['deploy']
+
+    if do_build:
+        build(formula)
+
+    if do_deploy:
+        pass
