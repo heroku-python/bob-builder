@@ -5,11 +5,18 @@ import envoy
 import sys
 from tempfile import mkstemp
 
+import boto
+from boto.s3.key import Key
+
 from .utils import deps_extract, path_extract, mkdir_p, process, pipe, targz_tree
 
 WORKSPACE = os.environ.get('WORKSPACE', 'workspace')
 DEFAULT_BUILD_PATH = os.environ.get('DEFAULT_BUILD_PATH', '/app/.heroku/')
+AWS_BUCKET=os.environ.get('AWS_BUCKET')
 HOME_PWD = os.getcwd()
+
+s3 = boto.connect_s3()
+bucket = s3.get_bucket(AWS_BUCKET)
 
 class Formula(object):
 
@@ -73,7 +80,14 @@ class Formula(object):
 
 
     def deploy(self):
-        pass
+        # TODO: potential support for optional prefix?
+        # TODO: overwrite flag, default to off
+        assert self.archive_path
+
+        k = Key(bucket)
+        k.key = '{}.tar.gz'.format(self.path)
+        k.set_contents_from_filename(self.archive_path)
+        k.set_acl('public-read')
 
 
 
