@@ -39,18 +39,29 @@ def build(formula):
         print 'Resolving dependencies... found {}:'.format(len(deps))
 
         for dep in deps:
-            print ' - {}'.format(dep)
+            print '  - {}'.format(dep)
 
     print
 
+    # CLI lies ahead.
     f.build()
 
+    return f
 
-    # Isolate /app
-    # Execute a build
     # Tarball
     # Upload to an s3 bucket
     # Then, sidestep.
+
+
+def deploy(formula):
+    f = build(formula)
+
+    print 'Build successful.'
+    print 'Archiving.'
+    f.archive()
+
+    print 'Deploying.'
+    f.deploy()
 
 
 
@@ -66,4 +77,4 @@ def dispatch():
         build(formula)
 
     if do_deploy:
-        pass
+        deploy(formula)

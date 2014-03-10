@@ -45,7 +45,7 @@ class Formula(object):
         # Prepare build directory.
         mkdir_p(self.build_path)
 
-        print 'Executing formula {}:'.format(self.path)
+        print 'Building formula {}:'.format(self.path)
 
         # Execute the formula script.
         cmd = [self.full_path, self.build_path]
@@ -54,16 +54,18 @@ class Formula(object):
         pipe(p.stdout, sys.stdout, indent=True)
         p.wait()
 
-        if p.returncode == 0:
+        if p.returncode != 0:
             print
             print 'WARNING: An error occurred:'
             pipe(p.stderr, sys.stderr, indent=True)
             exit()
 
-        print 'Build successful.'
 
+    def archive(self):
+        pass
 
-
+    def deploy(self):
+        pass
 
 
 
