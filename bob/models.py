@@ -40,7 +40,7 @@ class Formula(object):
 
     @property
     def build_path(self):
-        return build_path_extract(self.full_path) or DEFAULT_BUILD_PATH
+        return path_extract(self.full_path) or DEFAULT_BUILD_PATH
 
     def build(self):
 
@@ -65,7 +65,7 @@ class Formula(object):
 
     def archive(self):
         """Archives the build directory as a tar.gz."""
-        archive = mkstemp()
+        archive = mkstemp()[1]
         targz_tree(self.build_path, archive)
 
         print archive
