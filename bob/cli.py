@@ -56,7 +56,6 @@ def build(formula):
 def deploy(formula):
     f = build(formula)
 
-    print 'Build successful.'
     print 'Archiving.'
     f.archive()
 
