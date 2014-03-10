@@ -3,17 +3,19 @@
 import os
 import envoy
 import sys
+from tempfile import mkstemp
 
-from .utils import depends_extract, build_path_extract, mkdir_p, process, pipe
+from .utils import deps_extract, path_extract, mkdir_p, process, pipe, targz_tree
 
-WORKSPACE = 'workspace'
-DEFAULT_BUILD_PATH = '/app/.heroku/'
+WORKSPACE = os.environ.get('WORKSPACE', 'workspace')
+DEFAULT_BUILD_PATH = os.environ.get('DEFAULT_BUILD_PATH', '/app/.heroku/')
 HOME_PWD = os.getcwd()
 
 class Formula(object):
 
     def __init__(self, path):
         self.path = path
+        self.archive_path = None
 
     def __repr__(self):
         return '<Formula {}>'.format(self.path)
@@ -34,7 +36,7 @@ class Formula(object):
     @property
     def depends_on(self):
         # TODO: full cascade? (e.g. resolve first?)
-        return depends_extract(self.full_path)
+        return deps_extract(self.full_path)
 
     @property
     def build_path(self):
@@ -62,7 +64,13 @@ class Formula(object):
 
 
     def archive(self):
-        pass
+        """Archives the build directory as a tar.gz."""
+        archive = mkstemp()
+        targz_tree(self.build_path, archive)
+
+        print archive
+        self.archive_path = archive
+
 
     def deploy(self):
         pass

@@ -2,6 +2,7 @@
 
 import os
 import re
+import tarfile
 from subprocess import Popen, PIPE
 
 
@@ -9,7 +10,7 @@ DEPENDS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
 
 
-def depends_extract(path):
+def deps_extract(path):
     """Extracts a list of declared dependencies from a given formula."""
 
     depends = []
@@ -30,7 +31,7 @@ def depends_extract(path):
     return depends
 
 
-def build_path_extract(path):
+def path_extract(path):
     """Extracts a declared build path from a given formula."""
 
     with open(path) as f:
@@ -66,3 +67,8 @@ def pipe(a, b, indent=True):
 
         b.write(line)
 
+
+def targz_tree(dir, output):
+    """Creates a tar.gz archive from a given directory."""
+    with tarfile.open(output, 'w:gz') as tar:
+        tar.add(dir, arcname=os.path.basename(dir))
