@@ -8,6 +8,7 @@ from subprocess import Popen, PIPE
 DEPENDS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
 
+
 def depends_extract(path):
     """Extracts a list of declared dependencies from a given formula."""
 
@@ -42,16 +43,19 @@ def build_path_extract(path):
 
                 return l
 
+
 def mkdir_p(path):
     try:
         os.makedirs(path)
     except OSError:
         pass
 
+
 def process(cmd, cwd=None):
     """A simple wrapper around the subprocess module."""
     p = Popen(cmd, cwd=cwd, shell=True, stdout=PIPE, stderr=PIPE)
     return p
+
 
 def pipe(a, b, indent=True):
     """Pipes stream A to stream B, with optional indentation."""
