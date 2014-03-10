@@ -4,7 +4,7 @@ import os
 import envoy
 import sys
 
-from .utils import depends_extract, build_path_extract, mkdir_p, shell, indent
+from .utils import depends_extract, build_path_extract, mkdir_p, process, pipe
 
 WORKSPACE = 'workspace'
 DEFAULT_BUILD_PATH = '/app/.heroku/'
@@ -42,24 +42,28 @@ class Formula(object):
 
     def build(self):
 
-        print self.build_path
-
         # Prepare build directory.
         mkdir_p(self.build_path)
-        # os.chdir(self.build_path)
+
+        print 'Executing formula {}:'.format(self.path)
 
         # Execute the formula script.
         cmd = [self.full_path, self.build_path]
+        p = process(cmd, cwd=self.build_path)
 
-        p = shell(cmd, cwd=self.build_path)
+        pipe(p.stdout, sys.stdout, indent=True)
+        p.wait()
 
-        # Pipe the output to stdout.
-        for line in p.stdout:
-            sys.stdout.write(indent(line))
+        if p.returncode == 0:
+            print
+            print 'WARNING: An error occurred:'
+            pipe(p.stderr, sys.stderr, indent=True)
+            exit()
 
-        # p.wait()
+        print 'Build successful.'
 
-        # print p
+
+
 
 
 

@@ -48,10 +48,17 @@ def mkdir_p(path):
     except OSError:
         pass
 
-def shell(cmd, cwd=None):
+def process(cmd, cwd=None):
+    """A simple wrapper around the subprocess module."""
     p = Popen(cmd, cwd=cwd, shell=True, stdout=PIPE, stderr=PIPE)
     return p
 
-def indent(s, n=4):
-    template = (' ' * n) + '{}'
-    template.format(s)
+def pipe(a, b, indent=True):
+    """Pipes stream A to stream B, with optional indentation."""
+    for line in a:
+
+        if indent:
+            b.write('    ')
+
+        b.write(line)
+
