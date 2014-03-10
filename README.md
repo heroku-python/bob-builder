@@ -16,3 +16,15 @@ It is inspired by (and extracted from) [kennethreitz/python-versions](https://gi
 - Bash, mostly
 - A litle bit of Python
 - Boto
+
+## Getting Started (Staging)
+
+ * Create a Heroku app and push the build toolkit to it.
+   (`$ heroku create build-toolkit-python-staging`)
+ * Add your S3 credentials to the application
+   (`AWS_ACCESS_KEY_ID`, `AWS_BUCKET` and `AWS_SECRET_ACCESS_KEY`)
+ * `dyno$ heroku run bash`
+ * `dyno$ bob build runtimes/python-2.7.6`
+ * `dyno$ bob deploy runtimes/python-2.7.6`
+
+
