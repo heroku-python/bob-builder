@@ -85,4 +85,4 @@ def dispatch():
     try:
         main()
     except KeyboardInterrupt:
-        print 'Aborting.'
+        print 'ool.'
