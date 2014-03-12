@@ -6,8 +6,7 @@ import tarfile
 from subprocess import Popen, PIPE
 
 
-DEPS_MARKER = '# Build Deps: '
-BUILD_PATH_MARKER = '# Build Path: '
+
 
 
 def iter_marker_lines(marker, formula, strip=True):
@@ -22,27 +21,6 @@ def iter_marker_lines(marker, formula, strip=True):
                     line = line.strip()
 
                 yield line
-
-
-def deps_extract(formula):
-    """Extracts a list of declared dependencies from a given formula."""
-    # Depends: libraries/libsqlite, libraries/libsqlite
-
-    depends = []
-
-    for result in iter_marker_lines(DEPS_MARKER, formula):
-        # Split on both space and comma.
-        result = re.split(r'[ ,]+', result)
-        depends.extend(result)
-
-    return depends
-
-
-def path_extract(formula):
-    """Extracts a declared build path from a given formula."""
-
-    for result in iter_marker_lines(BUILD_PATH_MARKER, formula):
-        return result
 
 
 def mkdir_p(path):
