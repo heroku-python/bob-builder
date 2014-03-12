@@ -18,6 +18,10 @@ HOME_PWD = os.getcwd()
 s3 = boto.connect_s3()
 bucket = s3.get_bucket(AWS_BUCKET)
 
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
+
+
 class Formula(object):
 
     def __init__(self, path):
@@ -88,14 +92,15 @@ class Formula(object):
 
         if key:
             if not allow_overwrite:
-                print 'WARNING: {} already exists. Use the --overwrite flag to continue.'
+                print 'WARNING: Archive {} already exists.'.format(key_name)
+                print '    Use the --overwrite flag to continue.'
                 exit()
         else:
-            key = bucket.new_key(key_name
+            key = bucket.new_key(key_name)
 
         # Upload the archive, set permissions.
-        k.set_contents_from_filename(self.archive_path)
-        k.set_acl('public-read')
+        key.set_contents_from_filename(self.archive_path)
+        key.set_acl('public-read')
 
 
 

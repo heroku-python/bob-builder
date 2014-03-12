@@ -64,7 +64,7 @@ def deploy(formula, overwrite):
 
 
 
-def dispatch():
+def main():
 
     args = docopt(__doc__)
 
@@ -79,3 +79,10 @@ def dispatch():
 
     if do_deploy:
         deploy(formula, overwrite=do_overwrite)
+
+
+def dispatch():
+    try:
+        main()
+    except KeyboardInterrupt:
+        print 'Aborting.'
