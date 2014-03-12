@@ -79,18 +79,23 @@ class Formula(object):
         self.archive_path = archive
 
 
-    def deploy(self):
-        # TODO: potential support for optional prefix?
-        # TODO: overwrite flag, default to off
+    def deploy(self, allow_overwrite=False):
+        """Deploys the formula's archive to S3."""
         assert self.archive_path
 
-        k = Key(bucket)
-        k.key = '{}.tar.gz'.format(self.path)
+        key_name = '{}.tar.gz'.format(self.path)
+        key = bucket.get_key(key_name)
+
+        if key:
+            if not allow_overwrite:
+                print 'WARNING: {} already exists. Use the --overwrite flag to continue.'
+                exit()
+        else:
+            key = bucket.new_key(key_name
+
+        # Upload the archive, set permissions.
         k.set_contents_from_filename(self.archive_path)
         k.set_acl('public-read')
-
-
-
 
 
 

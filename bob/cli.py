@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 """Usage: bob build <formula>
-       bob deploy <formula>
+       bob deploy <formula> [--overwrite]
 
 Build formula and optionally deploy it.
 
 Options:
     -h --help
-    --no-deps  skip dependency cascading.
+    --overwrite  allow overwriting of deployed archives.
 
 Configuration:
     Environment Variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET
@@ -53,14 +53,14 @@ def build(formula):
     # Then, sidestep.
 
 
-def deploy(formula):
+def deploy(formula, overwrite):
     f = build(formula)
 
     print 'Archiving.'
     f.archive()
 
     print 'Deploying.'
-    f.deploy()
+    f.deploy(allow_overwrite=overwrite)
 
 
 
@@ -71,9 +71,11 @@ def dispatch():
     formula = args['<formula>']
     do_build = args['build']
     do_deploy = args['deploy']
+    do_overwrite = args['--overwrite']
+
 
     if do_build:
         build(formula)
 
     if do_deploy:
-        deploy(formula)
+        deploy(formula, overwrite=do_overwrite)
