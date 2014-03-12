@@ -5,10 +5,6 @@ import re
 import tarfile
 from subprocess import Popen, PIPE
 
-
-
-
-
 def iter_marker_lines(marker, formula, strip=True):
     """Extracts any markers from a given formula."""
 
