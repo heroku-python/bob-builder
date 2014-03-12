@@ -34,7 +34,7 @@ class Formula(object):
 
     def __init__(self, path):
         self.path = path
-        self.archive_path = None
+        self.archived_path = None
 
     def __repr__(self):
         return '<Formula {}>'.format(self.path)
@@ -104,12 +104,12 @@ class Formula(object):
         targz_tree(self.build_path, archive)
 
         print archive
-        self.archive_path = archive
+        self.archived_path = archive
 
 
     def deploy(self, allow_overwrite=False):
         """Deploys the formula's archive to S3."""
-        assert self.archive_path
+        assert self.archived_path
 
         key_name = '{}.tar.gz'.format(self.path)
         key = bucket.get_key(key_name)
@@ -123,7 +123,7 @@ class Formula(object):
             key = bucket.new_key(key_name)
 
         # Upload the archive, set permissions.
-        key.set_contents_from_filename(self.archive_path)
+        key.set_contents_from_filename(self.archived_path)
         key.set_acl('public-read')
 
 
