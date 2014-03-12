@@ -6,43 +6,43 @@ import tarfile
 from subprocess import Popen, PIPE
 
 
-DEPENDS_MARKER = '# Build Deps: '
+DEPS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
 
 
-def deps_extract(path):
+def iter_marker_lines(marker, formula, strip=True):
+    """Extracts any markers from a given formula."""
+
+    with open(formula) as f:
+        for line in f:
+            if line.startswith(marker):
+
+                if strip:
+                    line = line[len(marker):]
+                    line = line.strip()
+
+                yield line
+
+
+def deps_extract(formula):
     """Extracts a list of declared dependencies from a given formula."""
+    # Depends: libraries/libsqlite, libraries/libsqlite
 
     depends = []
 
-    with open(path) as f:
-        for line in f:
-            # Depends: libraries/libsqlite, libraries/libsqlite
-            if line.startswith(DEPENDS_MARKER):
-
-                l = line[len(DEPENDS_MARKER):]
-                l = l.strip()
-
-                # Split on both space and comma.
-                l = re.split(r'[ ,]+', l)
-
-                depends.extend(l)
+    for result in iter_marker_lines(DEPS_MARKER, formula):
+        # Split on both space and comma.
+        result = re.split(r'[ ,]+', result)
+        depends.extend(result)
 
     return depends
 
 
-def path_extract(path):
+def path_extract(formula):
     """Extracts a declared build path from a given formula."""
 
-    with open(path) as f:
-        for line in f:
-            # Build Path: /app/.heroku/usr/local
-            if line.startswith(BUILD_PATH_MARKER):
-
-                l = line[len(BUILD_PATH_MARKER):]
-                l = l.strip()
-
-                return l
+    for result in iter_marker_lines(BUILD_PATH_MARKER, formula):
+        return result
 
 
 def mkdir_p(path):
@@ -54,12 +54,13 @@ def mkdir_p(path):
 
 def process(cmd, cwd=None):
     """A simple wrapper around the subprocess module."""
-    p = Popen(cmd, cwd=cwd, shell=True, stdout=PIPE, stderr=PIPE)
+    p = Popen(cmd, cwd=cwd, shell=False, stdout=PIPE, stderr=PIPE)
     return p
 
 
 def pipe(a, b, indent=True):
     """Pipes stream A to stream B, with optional indentation."""
+
     for line in a:
 
         if indent:

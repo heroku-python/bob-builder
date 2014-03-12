@@ -18,9 +18,9 @@ HOME_PWD = os.getcwd()
 s3 = boto.connect_s3()
 bucket = s3.get_bucket(AWS_BUCKET)
 
+# Make stdin/out as unbuffered as possible via file descriptor modes.
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
-
 
 class Formula(object):
 
@@ -54,7 +54,6 @@ class Formula(object):
         return path_extract(self.full_path) or DEFAULT_BUILD_PATH
 
     def build(self):
-
         # Prepare build directory.
         mkdir_p(self.build_path)
 
