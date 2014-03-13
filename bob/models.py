@@ -19,8 +19,6 @@ HOME_PWD = os.getcwd()
 
 DEPS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
-ARCHIVE_PATH_MARKER = '# Archive Path: '
-
 
 s3 = boto.connect_s3()
 bucket = s3.get_bucket(AWS_BUCKET)
