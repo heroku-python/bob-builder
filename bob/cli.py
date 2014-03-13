@@ -29,20 +29,6 @@ def build(formula):
         print 'Formula {} doesn\'t appear to exist.'.format(formula)
         exit(1)
 
-    print 'Building {}'.format(formula)
-
-    # Dependency metadata, extracted from bash comments.
-    deps = f.depends_on
-    print
-
-    if deps:
-        print 'Resolving dependencies... found {}:'.format(len(deps))
-
-        for dep in deps:
-            print '  - {}'.format(dep)
-
-    print
-
     # CLI lies ahead.
     f.build()
 

@@ -78,9 +78,28 @@ class Formula(object):
         return DEFAULT_BUILD_PATH
 
 
+    def resolve_deps(self):
+
+        # Dependency metadata, extracted from bash comments.
+        deps = self.depends_on
+        print
+
+        if deps:
+            print 'Resolving dependencies... found {}:'.format(len(deps))
+
+            for dep in deps:
+                print '  - {}'.format(dep)
+                # Grab the Dep from S3, download it to a temp file.
+                # Extract the Dep to the appropriate location.
+                # If it doesn't exist, bail.
+                # Resolve it. If there's a problem, raise an error and quit.
+        print
+
     def build(self):
         # Prepare build directory.
         mkdir_p(self.build_path)
+
+        self.resolve_deps()
 
         print 'Building formula {}:'.format(self.path)
 
