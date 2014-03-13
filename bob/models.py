@@ -14,7 +14,7 @@ from .utils import *
 
 WORKSPACE = os.environ.get('WORKSPACE', 'workspace')
 DEFAULT_BUILD_PATH = os.environ.get('DEFAULT_BUILD_PATH', '/app/.heroku/')
-AWS_BUCKET=os.environ.get('AWS_BUCKET')
+AWS_BUCKET = os.environ.get('AWS_BUCKET')
 HOME_PWD = os.getcwd()
 
 DEPS_MARKER = '# Build Deps: '
