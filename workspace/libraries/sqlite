@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 # Usage: $ build.sh <output-dir>
+# Build Path: /Users/kreitz/repos/heroku/build-toolkit/.heroku/python/
+# Build Path: /app/.heroku/python/
 
 OUT_PREFIX=$1
+
+echo "Building SQLite..."
+
+
 SOURCE_TARBALL='http://www.sqlite.org/sqlite-autoconf-3070900.tar.gz'
 
 curl $SOURCE_TARBALL | tar xz

@@ -2,16 +2,9 @@
 # Options: <output-dir>
 # Build Path: /Users/kreitz/repos/heroku/build-toolkit/.heroku/python/
 # Build Path: /app/.heroku/python/
-# Build Deps: libraries/libsqlite
-# fortune
-# touch hello
-# touch world
-# echo foo >/dev/stderr
-# exit
-OUT_PREFIX=$1
+# Build Deps: libraries/sqlite
 
-# echo "Building SQLite..."
-# ./parts/sqlite $OUT_PREFIX
+OUT_PREFIX=$1
 
 echo "Building Python..."
 SOURCE_TARBALL='http://python.org/ftp/python/2.7.6/Python-2.7.6.tgz'

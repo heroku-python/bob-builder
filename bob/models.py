@@ -10,7 +10,7 @@ import re
 import boto
 from boto.s3.key import Key
 
-from .utils import iter_marker_lines, mkdir_p, process, pipe, targz_tree
+from .utils import *
 
 WORKSPACE = os.environ.get('WORKSPACE', 'workspace')
 DEFAULT_BUILD_PATH = os.environ.get('DEFAULT_BUILD_PATH', '/app/.heroku/')
@@ -90,11 +90,21 @@ class Formula(object):
             for dep in deps:
                 print '  - {}'.format(dep)
 
+                key_name = '{}.tar.gz'.format(dep)
+                key = bucket.get_key(key_name)
+
+                if not key:
+                    print
+                    print 'WARNING: Archive {} does not exist.'.format(key_name)
+                    print '    Please deploy it to continue.'
+                    exit()
+
                 # Grab the Dep from S3, download it to a temp file.
+                archive = mkstemp()[1]
+                key.get_contents_to_filename(archive)
+
                 # Extract the Dep to the appropriate location.
-                # If it doesn't exist, bail.
-                # Resolve it. If there's a problem, raise an error and quit.
-        print
+                extract_tree(archive, self.build_path)
 
     def build(self):
         # Prepare build directory.
@@ -121,7 +131,7 @@ class Formula(object):
     def archive(self):
         """Archives the build directory as a tar.gz."""
         archive = mkstemp()[1]
-        targz_tree(self.build_path, archive)
+        archive_tree(self.build_path, archive)
 
         print archive
         self.archived_path = archive
