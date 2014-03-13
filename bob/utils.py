@@ -43,7 +43,12 @@ def pipe(a, b, indent=True):
         b.write(line)
 
 
-def targz_tree(dir, output):
+def archive_tree(dir, archive):
     """Creates a tar.gz archive from a given directory."""
-    with tarfile.open(output, 'w:gz') as tar:
+    with tarfile.open(archive, 'w:gz') as tar:
         tar.add(dir, arcname=os.path.basename(dir))
+
+def extract_tree(archive, dir):
+    """Extract tar.gz archive to a given directory."""
+    with tarfile.open(archive, 'r:gz') as tar:
+        tar.extractall(dir)

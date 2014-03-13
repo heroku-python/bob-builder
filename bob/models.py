@@ -85,10 +85,11 @@ class Formula(object):
         print
 
         if deps:
-            print 'Resolving dependencies... found {}:'.format(len(deps))
+            print 'Fetching dependencies... found {}:'.format(len(deps))
 
             for dep in deps:
                 print '  - {}'.format(dep)
+
                 # Grab the Dep from S3, download it to a temp file.
                 # Extract the Dep to the appropriate location.
                 # If it doesn't exist, bail.
