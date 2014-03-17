@@ -12,16 +12,17 @@ from boto.s3.key import Key
 
 from .utils import *
 
-WORKSPACE = os.environ.get('WORKSPACE', 'workspace')
+WORKSPACE = os.environ.get('WORKSPACE_DIR', 'workspace')
 DEFAULT_BUILD_PATH = os.environ.get('DEFAULT_BUILD_PATH', '/app/.heroku/')
-AWS_BUCKET = os.environ.get('AWS_BUCKET')
-HOME_PWD = os.getcwd()
+S3_BUCKET = os.environ.get('S3_BUCKET')
+S3_PREFIX = '{}/'.format(os.environ['S3_PREFIX']) if 'S3_PREFIX' in os.environ else ''
+
 
 DEPS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
 
 s3 = boto.connect_s3()
-bucket = s3.get_bucket(AWS_BUCKET)
+bucket = s3.get_bucket(S3_BUCKET)
 
 # Make stdin/out as unbuffered as possible via file descriptor modes.
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
@@ -88,7 +89,7 @@ class Formula(object):
             for dep in deps:
                 print '  - {}'.format(dep)
 
-                key_name = '{}.tar.gz'.format(dep)
+                key_name = '{}{}.tar.gz'.format(S3_PREFIX, dep)
                 key = bucket.get_key(key_name)
 
                 if not key:
@@ -139,7 +140,7 @@ class Formula(object):
         """Deploys the formula's archive to S3."""
         assert self.archived_path
 
-        key_name = '{}.tar.gz'.format(self.path)
+        key_name = '{}{}.tar.gz'.format(S3_PREFIX, self.path)
         key = bucket.get_key(key_name)
 
         if key:
@@ -153,7 +154,3 @@ class Formula(object):
         # Upload the archive, set permissions.
         key.set_contents_from_filename(self.archived_path)
         key.set_acl('public-read')
-
-
-
-

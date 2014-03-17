@@ -5,10 +5,7 @@
 import os
 import sys
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup
 
 deps = [
     'boto',
@@ -17,7 +14,7 @@ deps = [
 ]
 
 setup(
-    name='bob',
+    name='bob-builder',
     version='0.0.1',
     install_requires=deps,
     description='Binary Build Toolkit.',
