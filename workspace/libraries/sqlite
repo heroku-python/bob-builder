@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Options: <output-dir>
 # Build Path: /app/.heroku/python/
 
 OUT_PREFIX=$1
