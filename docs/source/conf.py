@@ -275,4 +275,5 @@ html_sidebars = {
 html_theme_options = {
    'github_user': 'kennethreitz',
    'github_repo': 'bob-builder',
+   'github_banner': 'true'
 }
