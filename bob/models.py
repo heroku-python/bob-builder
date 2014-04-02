@@ -111,11 +111,14 @@ class Formula(object):
 
         self.resolve_deps()
 
-        print 'Building formula {}:'.format(self.path)
+        # Temporary directory where work will be carried out, because of David.
+        cwd_path = mkdtemp(prefix='bob')
+
+        print 'Building formula {} in {}:'.format(self.path, cwd_path)
 
         # Execute the formula script.
         cmd = [self.full_path, self.build_path]
-        p = process(cmd, cwd=self.build_path)
+        p = process(cmd, cwd=cwd_path)
 
         pipe(p.stdout, sys.stdout, indent=True)
         p.wait()
