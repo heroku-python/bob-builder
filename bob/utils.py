@@ -48,7 +48,6 @@ def archive_tree(dir, archive):
 
     abspath = os.path.abspath(dir)
     base_root = None
-    transposed_base = None
     is_top_level = False
 
     with tarfile.open(archive, 'w:gz') as tar:
@@ -62,25 +61,19 @@ def archive_tree(dir, archive):
             if not base_root:
                 base_root = root
 
-            # No path at all for the top-level directory.
-            if not is_top_level:
-                transposed_base = root[len(base_root)+1:]
-            else:
-                transposed_base = ''
-
+            transposed_base = root[len(base_root)+1:]
 
             for file in files:
 
                 standard_path = os.path.join(root, file)
 
-                if not transposed_base:
+                if is_top_level:
                     transposed_path = file
                 else:
                     transposed_path = os.path.join(transposed_base, file)
 
                 # Add the file to the archive, with the proper transposed path.
                 tar.add(standard_path, arcname=transposed_path)
-
 
             # Close out the top-level directory marker.
             is_top_level = False
