@@ -270,3 +270,9 @@ html_sidebars = {
        'about.html', 'navigation.html', 'searchbox.html', 'donate.html',
    ]
 }
+
+
+html_theme_options = {
+   'github_user': 'kennethreitz',
+   'github_repo': 'bob-builder',
+}
