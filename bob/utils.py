@@ -45,46 +45,8 @@ def pipe(a, b, indent=True):
 
 def archive_tree(dir, archive):
     """Creates a tar.gz archive from a given directory."""
-
-    abspath = os.path.abspath(dir)
-    base_root = None
-    transposed_base = None
-    is_top_level = False
-
     with tarfile.open(archive, 'w:gz') as tar:
-
-        for root, _, files in os.walk(abspath):
-
-            # Mark the first pass as the top-level directory.
-            if is_top_level is None:
-                is_top_level = True
-
-            if not base_root:
-                base_root = root
-
-            # No path at all for the top-level directory.
-            if not is_top_level:
-                transposed_base = root[len(base_root)+1:]
-            else:
-                transposed_base = ''
-
-
-            for file in files:
-
-                standard_path = os.path.join(root, file)
-
-                if not transposed_base:
-                    transposed_path = file
-                else:
-                    transposed_path = os.path.join(transposed_base, file)
-
-                # Add the file to the archive, with the proper transposed path.
-                tar.add(standard_path, arcname=transposed_path)
-
-
-            # Close out the top-level directory marker.
-            is_top_level = False
-
+        tar.add(dir, arcname=os.path.basename(dir))
 
 def extract_tree(archive, dir):
     """Extract tar.gz archive to a given directory."""
