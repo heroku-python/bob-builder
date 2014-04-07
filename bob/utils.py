@@ -46,7 +46,9 @@ def pipe(a, b, indent=True):
 def archive_tree(dir, archive):
     """Creates a tar.gz archive from a given directory."""
     with tarfile.open(archive, 'w:gz') as tar:
-        tar.add(dir, arcname=os.path.basename(dir))
+        # do not tar.add(dir) with empty arcname, that will create a "/" entry and tar will complain when extracting
+        for item in os.listdir(dir):
+            tar.add(dir+"/"+item, arcname=item)
 
 def extract_tree(archive, dir):
     """Extract tar.gz archive to a given directory."""
