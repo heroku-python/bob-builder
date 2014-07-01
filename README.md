@@ -23,7 +23,7 @@ It is inspired by (and extracted from) [kennethreitz/python-versions](https://gi
    (`$ heroku create build-toolkit-python-staging`)
  * Add your S3 credentials to the application
    (`AWS_ACCESS_KEY_ID`,`AWS_SECRET_ACCESS_KEY`, and `S3_BUCKET`)
- * `dyno$ heroku run bash`
+ * `local$ heroku run bash`
  * `dyno$ bob build runtimes/python-2.7.6`
  * `dyno$ bob deploy runtimes/python-2.7.6`
 
