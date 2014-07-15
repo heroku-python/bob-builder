@@ -20,7 +20,7 @@ It is inspired by (and extracted from) [kennethreitz/python-versions](https://gi
 ## Getting Started (Staging)
 
  * `$ heroku create build-toolkit-python-staging --buildpack https://github.com/kennethreitz/conda-buildpack.git`
- * `$ heroku config:set AWS_ACCESS_KEY_ID=xxx AWS_SECRET_ACCESS_KEY=xxx S3_BUCKET=xxx
+ * `$ heroku config:set AWS_ACCESS_KEY_ID=xxx AWS_SECRET_ACCESS_KEY=xxx S3_BUCKET=xxx`
  
 ```
 $ heroku run bash
