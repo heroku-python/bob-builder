@@ -20,7 +20,7 @@ It is inspired by (and extracted from) [kennethreitz/python-versions](https://gi
 ## Getting Started (Staging)
 
  * Create a Heroku app and push the build toolkit to it.
-   (`$ heroku create build-toolkit-python-staging`)
+   (`$ heroku create build-toolkit-python-staging --buildpack https://github.com/kennethreitz/conda-buildpack.git`)
  * Add your S3 credentials to the application
    (`AWS_ACCESS_KEY_ID`,`AWS_SECRET_ACCESS_KEY`, and `S3_BUCKET`)
  * `local$ heroku run bash`
