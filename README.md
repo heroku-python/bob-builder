@@ -21,7 +21,9 @@ It is inspired by (and extracted from) [kennethreitz/python-versions](https://gi
 
  * `$ heroku create build-toolkit-python-staging --buildpack https://github.com/kennethreitz/conda-buildpack.git`
  * `$ heroku config:set AWS_ACCESS_KEY_ID=xxx AWS_SECRET_ACCESS_KEY=xxx S3_BUCKET=xxx`
- 
+
+Now that your Heroku app for building is created, push a repo containing your formula to the app (e.g. the python buildpack repo). 
+
 ```
 $ heroku run bash
   $ bob build runtimes/python-2.7.6
