@@ -3,7 +3,7 @@
 import os
 import re
 import tarfile
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 
 def iter_marker_lines(marker, formula, strip=True):
     """Extracts any markers from a given formula."""
@@ -27,8 +27,8 @@ def mkdir_p(path):
 
 
 def process(cmd, cwd=None):
-    """A simple wrapper around the subprocess module."""
-    p = Popen(cmd, cwd=cwd, shell=False, stdout=PIPE, stderr=PIPE)
+    """A simple wrapper around the subprocess module; stderr is redirected to stdout."""
+    p = Popen(cmd, cwd=cwd, shell=False, stdout=PIPE, stderr=STDOUT)
     return p
 
 
