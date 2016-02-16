@@ -15,8 +15,12 @@ from .utils import *
 WORKSPACE = os.environ.get('WORKSPACE_DIR', 'workspace')
 DEFAULT_BUILD_PATH = os.environ.get('DEFAULT_BUILD_PATH', '/app/.heroku/')
 S3_BUCKET = os.environ.get('S3_BUCKET')
-S3_PREFIX = '{}/'.format(os.environ['S3_PREFIX']) if 'S3_PREFIX' in os.environ else ''
+S3_PREFIX = os.environ.get('S3_PREFIX', '')
 
+# Append a slash for backwards compatibility.
+if S3_PREFIX:
+    if not S3_PREFIX.endswith('/'):
+        '{0}/'.format(S3_PREFIX)
 
 DEPS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
