@@ -18,8 +18,7 @@ S3_BUCKET = os.environ.get('S3_BUCKET')
 S3_PREFIX = os.environ.get('S3_PREFIX', '')
 
 # Append a slash for backwards compatibility.
-if S3_PREFIX:
-    if not S3_PREFIX.endswith('/'):
+if S3_PREFIX and not S3_PREFIX.endswith('/'):
         S3_PREFIX = '{0}/'.format(S3_PREFIX)
 
 DEPS_MARKER = '# Build Deps: '
