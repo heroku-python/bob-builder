@@ -35,7 +35,7 @@ def process(cmd, cwd=None):
 def pipe(a, b, indent=True):
     """Pipes stream A to stream B, with optional indentation."""
 
-    for line in a:
+    for line in iter(a.readline, b''):
 
         if indent:
             b.write('    ')
