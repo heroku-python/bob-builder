@@ -128,8 +128,7 @@ class Formula(object):
 
         if p.returncode != 0:
             print
-            print 'ERROR: An error occurred:'
-            pipe(p.stderr, sys.stderr, indent=True)
+            print 'ERROR: An error occurred.'
             exit(1)
 
 
