@@ -20,7 +20,7 @@ S3_PREFIX = os.environ.get('S3_PREFIX', '')
 # Append a slash for backwards compatibility.
 if S3_PREFIX:
     if not S3_PREFIX.endswith('/'):
-        '{0}/'.format(S3_PREFIX)
+        S3_PREFIX = '{0}/'.format(S3_PREFIX)
 
 DEPS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
