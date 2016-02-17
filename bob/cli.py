@@ -13,6 +13,7 @@ Configuration:
     Environment Variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET, S3_PREFIX (optional)
 """
 import os
+import sys
 
 from docopt import docopt
 from .models import Formula
@@ -27,7 +28,7 @@ def build(formula):
         assert f.exists
     except AssertionError:
         print 'Formula {} doesn\'t appear to exist.'.format(formula)
-        exit(1)
+        sys.exit(1)
 
     # CLI lies ahead.
     f.build()

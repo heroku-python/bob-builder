@@ -99,7 +99,7 @@ class Formula(object):
                     print
                     print 'ERROR: Archive {} does not exist.'.format(key_name)
                     print '    Please deploy it to continue.'
-                    exit(1)
+                    sys.exit(1)
 
                 # Grab the Dep from S3, download it to a temp file.
                 archive = mkstemp()[1]
@@ -129,7 +129,7 @@ class Formula(object):
         if p.returncode != 0:
             print
             print 'ERROR: An error occurred.'
-            exit(1)
+            sys.exit(1)
 
 
     def archive(self):
@@ -152,7 +152,7 @@ class Formula(object):
             if not allow_overwrite:
                 print 'ERROR: Archive {} already exists.'.format(key_name)
                 print '    Use the --overwrite flag to continue.'
-                exit(1)
+                sys.exit(1)
         else:
             key = bucket.new_key(key_name)
 
