@@ -73,3 +73,4 @@ def dispatch():
         main()
     except KeyboardInterrupt:
         print 'ool.'
+        sys.exit(130)
