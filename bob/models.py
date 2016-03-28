@@ -2,6 +2,7 @@
 
 import os
 import envoy
+import shutil
 import sys
 from tempfile import mkstemp, mkdtemp
 
@@ -110,6 +111,8 @@ class Formula(object):
 
     def build(self):
         # Prepare build directory.
+        if os.path.exists(self.build_path):
+                shutil.rmtree(self.build_path)
         mkdir_p(self.build_path)
 
         self.resolve_deps()
