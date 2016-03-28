@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import errno
 import os
 import re
 import tarfile
@@ -22,8 +23,11 @@ def iter_marker_lines(marker, formula, strip=True):
 def mkdir_p(path):
     try:
         os.makedirs(path)
-    except OSError:
-        pass
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 
 def process(cmd, cwd=None):
