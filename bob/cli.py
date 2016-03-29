@@ -10,7 +10,7 @@ Options:
     --overwrite  allow overwriting of deployed archives.
 
 Configuration:
-    Environment Variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET, S3_PREFIX (optional)
+    Environment Variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET, S3_PREFIX (optional), UPSTREAM_S3_BUCKET (optional), UPSTREAM_S3_PREFIX (optional)
 """
 import os
 import sys

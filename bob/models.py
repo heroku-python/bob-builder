@@ -17,16 +17,22 @@ WORKSPACE = os.environ.get('WORKSPACE_DIR', 'workspace')
 DEFAULT_BUILD_PATH = os.environ.get('DEFAULT_BUILD_PATH', '/app/.heroku/')
 S3_BUCKET = os.environ.get('S3_BUCKET')
 S3_PREFIX = os.environ.get('S3_PREFIX', '')
+UPSTREAM_S3_BUCKET = os.environ.get('UPSTREAM_S3_BUCKET')
+UPSTREAM_S3_PREFIX = os.environ.get('UPSTREAM_S3_PREFIX', '')
 
 # Append a slash for backwards compatibility.
 if S3_PREFIX and not S3_PREFIX.endswith('/'):
-        S3_PREFIX = '{0}/'.format(S3_PREFIX)
+    S3_PREFIX = '{0}/'.format(S3_PREFIX)
+if UPSTREAM_S3_PREFIX and not UPSTREAM_S3_PREFIX.endswith('/'):
+    UPSTREAM_S3_PREFIX = '{0}/'.format(UPSTREAM_S3_PREFIX)
 
 DEPS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
 
 s3 = boto.connect_s3()
 bucket = s3.get_bucket(S3_BUCKET)
+if UPSTREAM_S3_BUCKET:
+    upstream = s3.get_bucket(S3_BUCKET)
 
 # Make stdin/out as unbuffered as possible via file descriptor modes.
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
@@ -95,6 +101,11 @@ class Formula(object):
 
                 key_name = '{}{}.tar.gz'.format(S3_PREFIX, dep)
                 key = bucket.get_key(key_name)
+
+                if not key and upstream:
+                    print '    Not found in S3_BUCKET, trying UPSTREAM_S3_BUCKET...'
+                    key_name = '{}{}.tar.gz'.format(UPSTREAM_S3_PREFIX, dep)
+                    key = upstream.get_key(key_name)
 
                 if not key:
                     print
