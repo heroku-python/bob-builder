@@ -31,6 +31,7 @@ BUILD_PATH_MARKER = '# Build Path: '
 
 s3 = boto.connect_s3()
 bucket = s3.get_bucket(S3_BUCKET)
+upstream = None
 if UPSTREAM_S3_BUCKET:
     upstream = s3.get_bucket(S3_BUCKET)
 
