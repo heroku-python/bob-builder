@@ -9,7 +9,7 @@ It is inspired by (and extracted from) [kennethreitz/python-versions](https://gi
 - Flexible type hierarchy
 - Flat dependency resolution
 - Version agnostic (careful curation and naming conventions preferred)
-- Import already-deployed sub-dependencies during a build
+- Import already-deployed sub-dependencies during a build (optionally fetch from `UPSTREAM_S3_BUCKET`)
 
 ## Powered By
 
