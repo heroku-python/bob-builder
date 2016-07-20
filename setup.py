@@ -21,7 +21,7 @@ setup(
     # long_description='Meh.',/
     author='Kenneth Reitz',
     author_email='kenneth@heroku.com',
-    url='https://github.com/heroku/build-toolkit',
+    url='https://github.com/kennethreitz/bob-builder',
     packages=['bob'],
     license='MIT',
     entry_points={
