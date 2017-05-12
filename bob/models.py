@@ -7,10 +7,6 @@ from tempfile import mkstemp, mkdtemp
 
 import re
 
-import boto
-from boto.s3.key import Key
-from boto.exception import S3ResponseError
-
 from .utils import *
 
 WORKSPACE = os.environ.get('WORKSPACE_DIR', 'workspace')
@@ -29,20 +25,11 @@ if UPSTREAM_S3_PREFIX and not UPSTREAM_S3_PREFIX.endswith('/'):
 DEPS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
 
-s3 = boto.connect_s3()
+s3 = S3ConnectionHandler()
 bucket = s3.get_bucket(S3_BUCKET)
 upstream = None
 if UPSTREAM_S3_BUCKET:
-    try:
-        upstream = s3.get_bucket(UPSTREAM_S3_BUCKET)
-    except S3ResponseError as e:
-        if e.args[0] != 403:
-            # bucket does not exist or similar
-            raise
-        # response was 403, so our main bucket credentials do not allow access
-        # let's retry this then with anonymous access, which the upstream should allow for "list"
-        upstream_s3 = boto.connect_s3(anon=True)
-        upstream = upstream_s3.get_bucket(UPSTREAM_S3_BUCKET)
+    upstream = s3.get_bucket(UPSTREAM_S3_BUCKET)
 
 # Make stdin/out as unbuffered as possible via file descriptor modes.
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
@@ -168,6 +155,10 @@ class Formula(object):
     def deploy(self, allow_overwrite=False):
         """Deploys the formula's archive to S3."""
         assert self.archived_path
+
+        if bucket.connection.anon:
+            print 'ERROR: Deploy requires valid AWS credentials!'
+            sys.exit(1)
 
         key_name = '{}{}.tar.gz'.format(S3_PREFIX, self.path)
         key = bucket.get_key(key_name)
