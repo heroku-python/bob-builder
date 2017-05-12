@@ -6,7 +6,7 @@ import tarfile
 from subprocess import Popen, PIPE, STDOUT
 
 import boto
-from boto.exception import S3ResponseError
+from boto.exception import NoAuthHandlerFound, S3ResponseError
 
 
 def iter_marker_lines(marker, formula, strip=True):
@@ -68,19 +68,24 @@ class S3ConnectionHandler(object):
     A wrapper around boto's connect_s3() that automates fall-back to anonymous mode.
 
     This allows for unauthenticated retrieval from public buckets when the credentials
-    boto finds in the environment don't permit access to the bucket.
+    boto finds in the environment don't permit access to the bucket, or when boto was
+    unable to find any credentials at all.
 
     Returns a boto S3Connection object.
     """
 
     def __init__(self):
-        self.s3 = boto.connect_s3()
+        try:
+            self.s3 = boto.connect_s3()
+        except NoAuthHandlerFound:
+            print 'No AWS credentials found. Requests will be made without authentication.'
+            self.s3 = boto.connect_s3(anon=True)
 
     def get_bucket(self, name):
         try:
             return self.s3.get_bucket(name)
         except S3ResponseError as e:
-            if e.status == 403:
+            if e.status == 403 and not self.s3.anon:
                 print ('Access denied for bucket "{0}" using found credentials. '
                        'Retrying as an anonymous user.'.format(name))
                 if not hasattr(self, 's3_anon'):
