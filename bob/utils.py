@@ -2,7 +2,6 @@
 
 import errno
 import os
-import re
 import tarfile
 from subprocess import Popen, PIPE, STDOUT
 

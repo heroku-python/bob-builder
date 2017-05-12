@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import envoy
 import shutil
 import sys
 from tempfile import mkstemp, mkdtemp
