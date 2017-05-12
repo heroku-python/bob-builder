@@ -25,12 +25,6 @@ if UPSTREAM_S3_PREFIX and not UPSTREAM_S3_PREFIX.endswith('/'):
 DEPS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
 
-s3 = S3ConnectionHandler()
-bucket = s3.get_bucket(S3_BUCKET)
-upstream = None
-if UPSTREAM_S3_BUCKET:
-    upstream = s3.get_bucket(UPSTREAM_S3_BUCKET)
-
 # Make stdin/out as unbuffered as possible via file descriptor modes.
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
@@ -41,6 +35,10 @@ class Formula(object):
     def __init__(self, path):
         self.path = path
         self.archived_path = None
+
+        s3 = S3ConnectionHandler()
+        self.bucket = s3.get_bucket(S3_BUCKET)
+        self.upstream = s3.get_bucket(UPSTREAM_S3_BUCKET) if UPSTREAM_S3_BUCKET else None
 
     def __repr__(self):
         return '<Formula {}>'.format(self.path)
@@ -97,12 +95,12 @@ class Formula(object):
                 print '  - {}'.format(dep)
 
                 key_name = '{}{}.tar.gz'.format(S3_PREFIX, dep)
-                key = bucket.get_key(key_name)
+                key = self.bucket.get_key(key_name)
 
-                if not key and upstream:
+                if not key and self.upstream:
                     print '    Not found in S3_BUCKET, trying UPSTREAM_S3_BUCKET...'
                     key_name = '{}{}.tar.gz'.format(UPSTREAM_S3_PREFIX, dep)
-                    key = upstream.get_key(key_name)
+                    key = self.upstream.get_key(key_name)
 
                 if not key:
                     print
@@ -156,12 +154,12 @@ class Formula(object):
         """Deploys the formula's archive to S3."""
         assert self.archived_path
 
-        if bucket.connection.anon:
+        if self.bucket.connection.anon:
             print 'ERROR: Deploy requires valid AWS credentials!'
             sys.exit(1)
 
         key_name = '{}{}.tar.gz'.format(S3_PREFIX, self.path)
-        key = bucket.get_key(key_name)
+        key = self.bucket.get_key(key_name)
 
         if key:
             if not allow_overwrite:
@@ -169,7 +167,7 @@ class Formula(object):
                 print '    Use the --overwrite flag to continue.'
                 sys.exit(1)
         else:
-            key = bucket.new_key(key_name)
+            key = self.bucket.new_key(key_name)
 
         # Upload the archive, set permissions.
         key.set_contents_from_filename(self.archived_path)
