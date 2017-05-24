@@ -38,6 +38,10 @@ class Formula(object):
         self.path = path
         self.archived_path = None
 
+        if not S3_BUCKET:
+            print_stderr('The environment variable S3_BUCKET must be set to the bucket name.')
+            sys.exit(1)
+
         s3 = S3ConnectionHandler()
         self.bucket = s3.get_bucket(S3_BUCKET)
         self.upstream = s3.get_bucket(UPSTREAM_S3_BUCKET) if UPSTREAM_S3_BUCKET else None
