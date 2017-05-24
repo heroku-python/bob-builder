@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 import os
 import shutil
 import sys
@@ -86,26 +88,24 @@ class Formula(object):
 
         # Dependency metadata, extracted from bash comments.
         deps = self.depends_on
-        print
 
         if deps:
-            print 'Fetching dependencies... found {}:'.format(len(deps))
+            print('Fetching dependencies... found {}:'.format(len(deps)))
 
             for dep in deps:
-                print '  - {}'.format(dep)
+                print('  - {}'.format(dep))
 
                 key_name = '{}{}.tar.gz'.format(S3_PREFIX, dep)
                 key = self.bucket.get_key(key_name)
 
                 if not key and self.upstream:
-                    print '    Not found in S3_BUCKET, trying UPSTREAM_S3_BUCKET...'
+                    print('    Not found in S3_BUCKET, trying UPSTREAM_S3_BUCKET...')
                     key_name = '{}{}.tar.gz'.format(UPSTREAM_S3_PREFIX, dep)
                     key = self.upstream.get_key(key_name)
 
                 if not key:
-                    print
-                    print 'ERROR: Archive {} does not exist.'.format(key_name)
-                    print '    Please deploy it to continue.'
+                    print_stderr('Archive {} does not exist.\n'
+                                 'Please deploy it to continue.'.format(key_name))
                     sys.exit(1)
 
                 # Grab the Dep from S3, download it to a temp file.
@@ -114,6 +114,8 @@ class Formula(object):
 
                 # Extract the Dep to the appropriate location.
                 extract_tree(archive, self.build_path)
+
+            print()
 
     def build(self):
         # Prepare build directory.
@@ -126,7 +128,7 @@ class Formula(object):
         # Temporary directory where work will be carried out, because of David.
         cwd_path = mkdtemp(prefix='bob')
 
-        print 'Building formula {} in {}:'.format(self.path, cwd_path)
+        print('Building formula {} in {}:\n'.format(self.path, cwd_path))
 
         # Execute the formula script.
         cmd = [self.full_path, self.build_path]
@@ -136,8 +138,7 @@ class Formula(object):
         p.wait()
 
         if p.returncode != 0:
-            print
-            print 'ERROR: An error occurred.'
+            print_stderr('Formula exited with return code {}.'.format(p.returncode))
             sys.exit(1)
 
 
@@ -146,7 +147,7 @@ class Formula(object):
         archive = mkstemp()[1]
         archive_tree(self.build_path, archive)
 
-        print archive
+        print('Created: {}'.format(archive))
         self.archived_path = archive
 
 
@@ -155,7 +156,7 @@ class Formula(object):
         assert self.archived_path
 
         if self.bucket.connection.anon:
-            print 'ERROR: Deploy requires valid AWS credentials!'
+            print_stderr('Deploy requires valid AWS credentials.')
             sys.exit(1)
 
         key_name = '{}{}.tar.gz'.format(S3_PREFIX, self.path)
@@ -163,8 +164,8 @@ class Formula(object):
 
         if key:
             if not allow_overwrite:
-                print 'ERROR: Archive {} already exists.'.format(key_name)
-                print '    Use the --overwrite flag to continue.'
+                print_stderr('Archive {} already exists.\n'
+                             'Use the --overwrite flag to continue.'.format(key_name))
                 sys.exit(1)
         else:
             key = self.bucket.new_key(key_name)

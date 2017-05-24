@@ -12,10 +12,13 @@ Options:
 Configuration:
     Environment Variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET, S3_PREFIX (optional), UPSTREAM_S3_BUCKET (optional), UPSTREAM_S3_PREFIX (optional)
 """
+from __future__ import print_function
+
 import sys
 
 from docopt import docopt
 from .models import Formula
+from .utils import print_stderr
 
 
 
@@ -26,7 +29,7 @@ def build(formula):
     try:
         assert f.exists
     except AssertionError:
-        print 'Formula {} doesn\'t appear to exist.'.format(formula)
+        print_stderr("Formula {} doesn't exist.".format(formula))
         sys.exit(1)
 
     # CLI lies ahead.
@@ -42,10 +45,10 @@ def build(formula):
 def deploy(formula, overwrite):
     f = build(formula)
 
-    print 'Archiving.'
+    print('Archiving.')
     f.archive()
 
-    print 'Deploying.'
+    print('Deploying.')
     f.deploy(allow_overwrite=overwrite)
 
 
@@ -71,5 +74,5 @@ def dispatch():
     try:
         main()
     except KeyboardInterrupt:
-        print 'ool.'
+        print('ool.')
         sys.exit(130)
