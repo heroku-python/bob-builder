@@ -145,6 +145,7 @@ class Formula(object):
             print_stderr('Formula exited with return code {}.'.format(p.returncode))
             sys.exit(1)
 
+        print('\nBuild complete: {}'.format(self.build_path))
 
     def archive(self):
         """Archives the build directory as a tar.gz."""
@@ -174,6 +175,11 @@ class Formula(object):
         else:
             key = self.bucket.new_key(key_name)
 
+        url = key.generate_url(0, query_auth=False)
+        print('Uploading to: {}'.format(url))
+
         # Upload the archive, set permissions.
         key.set_contents_from_filename(self.archived_path)
         key.set_acl('public-read')
+
+        print('Upload complete!')
