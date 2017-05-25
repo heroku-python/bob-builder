@@ -113,7 +113,7 @@ class Formula(object):
                     sys.exit(1)
 
                 # Grab the Dep from S3, download it to a temp file.
-                archive = mkstemp()[1]
+                archive = mkstemp(prefix='bob-dep-', suffix='.tar.gz')[1]
                 key.get_contents_to_filename(archive)
 
                 # Extract the Dep to the appropriate location.
@@ -130,7 +130,7 @@ class Formula(object):
         self.resolve_deps()
 
         # Temporary directory where work will be carried out, because of David.
-        cwd_path = mkdtemp(prefix='bob')
+        cwd_path = mkdtemp(prefix='bob-')
 
         print('Building formula {} in {}:\n'.format(self.path, cwd_path))
 
@@ -149,7 +149,7 @@ class Formula(object):
 
     def archive(self):
         """Archives the build directory as a tar.gz."""
-        archive = mkstemp()[1]
+        archive = mkstemp(prefix='bob-build-', suffix='.tar.gz')[1]
         archive_tree(self.build_path, archive)
 
         print('Created: {}'.format(archive))
