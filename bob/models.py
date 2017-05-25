@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 import os
 import shutil
 import sys
 from tempfile import mkstemp, mkdtemp
 
 import re
-
-import boto
-from boto.s3.key import Key
-from boto.exception import S3ResponseError
 
 from .utils import *
 
@@ -29,21 +27,6 @@ if UPSTREAM_S3_PREFIX and not UPSTREAM_S3_PREFIX.endswith('/'):
 DEPS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
 
-s3 = boto.connect_s3()
-bucket = s3.get_bucket(S3_BUCKET)
-upstream = None
-if UPSTREAM_S3_BUCKET:
-    try:
-        upstream = s3.get_bucket(UPSTREAM_S3_BUCKET)
-    except S3ResponseError as e:
-        if e.args[0] != 403:
-            # bucket does not exist or similar
-            raise
-        # response was 403, so our main bucket credentials do not allow access
-        # let's retry this then with anonymous access, which the upstream should allow for "list"
-        upstream_s3 = boto.connect_s3(anon=True)
-        upstream = upstream_s3.get_bucket(UPSTREAM_S3_BUCKET)
-
 # Make stdin/out as unbuffered as possible via file descriptor modes.
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
@@ -54,6 +37,14 @@ class Formula(object):
     def __init__(self, path):
         self.path = path
         self.archived_path = None
+
+        if not S3_BUCKET:
+            print_stderr('The environment variable S3_BUCKET must be set to the bucket name.')
+            sys.exit(1)
+
+        s3 = S3ConnectionHandler()
+        self.bucket = s3.get_bucket(S3_BUCKET)
+        self.upstream = s3.get_bucket(UPSTREAM_S3_BUCKET) if UPSTREAM_S3_BUCKET else None
 
     def __repr__(self):
         return '<Formula {}>'.format(self.path)
@@ -101,26 +92,24 @@ class Formula(object):
 
         # Dependency metadata, extracted from bash comments.
         deps = self.depends_on
-        print
 
         if deps:
-            print 'Fetching dependencies... found {}:'.format(len(deps))
+            print('Fetching dependencies... found {}:'.format(len(deps)))
 
             for dep in deps:
-                print '  - {}'.format(dep)
+                print('  - {}'.format(dep))
 
                 key_name = '{}{}.tar.gz'.format(S3_PREFIX, dep)
-                key = bucket.get_key(key_name)
+                key = self.bucket.get_key(key_name)
 
-                if not key and upstream:
-                    print '    Not found in S3_BUCKET, trying UPSTREAM_S3_BUCKET...'
+                if not key and self.upstream:
+                    print('    Not found in S3_BUCKET, trying UPSTREAM_S3_BUCKET...')
                     key_name = '{}{}.tar.gz'.format(UPSTREAM_S3_PREFIX, dep)
-                    key = upstream.get_key(key_name)
+                    key = self.upstream.get_key(key_name)
 
                 if not key:
-                    print
-                    print 'ERROR: Archive {} does not exist.'.format(key_name)
-                    print '    Please deploy it to continue.'
+                    print_stderr('Archive {} does not exist.\n'
+                                 'Please deploy it to continue.'.format(key_name))
                     sys.exit(1)
 
                 # Grab the Dep from S3, download it to a temp file.
@@ -129,6 +118,8 @@ class Formula(object):
 
                 # Extract the Dep to the appropriate location.
                 extract_tree(archive, self.build_path)
+
+            print()
 
     def build(self):
         # Prepare build directory.
@@ -141,7 +132,7 @@ class Formula(object):
         # Temporary directory where work will be carried out, because of David.
         cwd_path = mkdtemp(prefix='bob')
 
-        print 'Building formula {} in {}:'.format(self.path, cwd_path)
+        print('Building formula {} in {}:\n'.format(self.path, cwd_path))
 
         # Execute the formula script.
         cmd = [self.full_path, self.build_path]
@@ -151,17 +142,17 @@ class Formula(object):
         p.wait()
 
         if p.returncode != 0:
-            print
-            print 'ERROR: An error occurred.'
+            print_stderr('Formula exited with return code {}.'.format(p.returncode))
             sys.exit(1)
 
+        print('\nBuild complete: {}'.format(self.build_path))
 
     def archive(self):
         """Archives the build directory as a tar.gz."""
         archive = mkstemp()[1]
         archive_tree(self.build_path, archive)
 
-        print archive
+        print('Created: {}'.format(archive))
         self.archived_path = archive
 
 
@@ -169,17 +160,26 @@ class Formula(object):
         """Deploys the formula's archive to S3."""
         assert self.archived_path
 
+        if self.bucket.connection.anon:
+            print_stderr('Deploy requires valid AWS credentials.')
+            sys.exit(1)
+
         key_name = '{}{}.tar.gz'.format(S3_PREFIX, self.path)
-        key = bucket.get_key(key_name)
+        key = self.bucket.get_key(key_name)
 
         if key:
             if not allow_overwrite:
-                print 'ERROR: Archive {} already exists.'.format(key_name)
-                print '    Use the --overwrite flag to continue.'
+                print_stderr('Archive {} already exists.\n'
+                             'Use the --overwrite flag to continue.'.format(key_name))
                 sys.exit(1)
         else:
-            key = bucket.new_key(key_name)
+            key = self.bucket.new_key(key_name)
+
+        url = key.generate_url(0, query_auth=False)
+        print('Uploading to: {}'.format(url))
 
         # Upload the archive, set permissions.
         key.set_contents_from_filename(self.archived_path)
         key.set_acl('public-read')
+
+        print('Upload complete!')

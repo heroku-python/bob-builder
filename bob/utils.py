@@ -1,9 +1,20 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 import errno
 import os
+import sys
 import tarfile
 from subprocess import Popen, PIPE, STDOUT
+
+import boto
+from boto.exception import NoAuthHandlerFound, S3ResponseError
+
+
+def print_stderr(message, prefix='ERROR'):
+    print('\n{}: {}\n'.format(prefix, message), file=sys.stderr)
+
 
 def iter_marker_lines(marker, formula, strip=True):
     """Extracts any markers from a given formula."""
@@ -57,3 +68,35 @@ def extract_tree(archive, dir):
     """Extract tar.gz archive to a given directory."""
     with tarfile.open(archive, 'r:gz') as tar:
         tar.extractall(dir)
+
+
+class S3ConnectionHandler(object):
+    """
+    A wrapper around boto's connect_s3() that automates fall-back to anonymous mode.
+
+    This allows for unauthenticated retrieval from public buckets when the credentials
+    boto finds in the environment don't permit access to the bucket, or when boto was
+    unable to find any credentials at all.
+
+    Returns a boto S3Connection object.
+    """
+
+    def __init__(self):
+        try:
+            self.s3 = boto.connect_s3()
+        except NoAuthHandlerFound:
+            print_stderr('No AWS credentials found. Requests will be made without authentication.',
+                         prefix='WARNING')
+            self.s3 = boto.connect_s3(anon=True)
+
+    def get_bucket(self, name):
+        try:
+            return self.s3.get_bucket(name)
+        except S3ResponseError as e:
+            if e.status == 403 and not self.s3.anon:
+                print('Access denied for bucket "{}" using found credentials. '
+                      'Retrying as an anonymous user.'.format(name))
+                if not hasattr(self, 's3_anon'):
+                    self.s3_anon = boto.connect_s3(anon=True)
+                return self.s3_anon.get_bucket(name)
+            raise
