@@ -1,4 +1,4 @@
-# Binary Build Toolkit
+# Bob: The Binary Build Toolkit
 
 This repo exists as a framework for the compilation and deployment of binaries and libraries on Heroku.
 
