@@ -26,7 +26,8 @@ Now that your Heroku app for building is created, push a repo containing your fo
 
 ```
 $ heroku run bash
-  $ bob build runtimes/python-2.7.6
-  $ bob deploy runtimes/python-2.7.6
+
+$ bob build runtimes/python-2.7.6
+$ bob deploy runtimes/python-2.7.6
 
 
