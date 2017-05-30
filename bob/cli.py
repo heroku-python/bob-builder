@@ -21,9 +21,7 @@ from .models import Formula
 from .utils import print_stderr
 
 
-
 def build(formula):
-
     f = Formula(path=formula)
 
     try:
@@ -37,10 +35,6 @@ def build(formula):
 
     return f
 
-    # Tarball
-    # Upload to an s3 bucket
-    # Then, sidestep.
-
 
 def deploy(formula, overwrite):
     f = build(formula)
@@ -52,16 +46,13 @@ def deploy(formula, overwrite):
     f.deploy(allow_overwrite=overwrite)
 
 
-
 def main():
-
     args = docopt(__doc__)
 
     formula = args['<formula>']
     do_build = args['build']
     do_deploy = args['deploy']
     do_overwrite = args['--overwrite']
-
 
     if do_build:
         build(formula)

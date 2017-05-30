@@ -3,13 +3,15 @@
 from __future__ import print_function
 
 import os
+import re
 import shutil
 import sys
 from tempfile import mkstemp, mkdtemp
 
-import re
+from .utils import (
+    archive_tree, extract_tree, iter_marker_lines, mkdir_p,
+    pipe, print_stderr, process, S3ConnectionHandler)
 
-from .utils import *
 
 WORKSPACE = os.environ.get('WORKSPACE_DIR', 'workspace')
 DEFAULT_BUILD_PATH = os.environ.get('DEFAULT_BUILD_PATH', '/app/.heroku/')
@@ -76,7 +78,6 @@ class Formula(object):
 
             return depends
 
-
     @property
     def build_path(self):
         """Extracts a declared build path from a given formula."""
@@ -86,7 +87,6 @@ class Formula(object):
 
         # If none was provided, fallback to default.
         return DEFAULT_BUILD_PATH
-
 
     def resolve_deps(self):
 
@@ -154,7 +154,6 @@ class Formula(object):
 
         print('Created: {}'.format(archive))
         self.archived_path = archive
-
 
     def deploy(self, allow_overwrite=False):
         """Deploys the formula's archive to S3."""

@@ -64,6 +64,7 @@ def archive_tree(dir, archive):
         for item in os.listdir(dir):
             tar.add(dir+"/"+item, arcname=item)
 
+
 def extract_tree(archive, dir):
     """Extract tar.gz archive to a given directory."""
     with tarfile.open(archive, 'r:gz') as tar:
