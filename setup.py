@@ -14,8 +14,8 @@ setup(
     install_requires=deps,
     description='Binary Build Toolkit.',
     # long_description='Meh.',/
-    author='Kenneth Reitz',
-    author_email='kenneth@heroku.com',
+    author='Heroku',
+    author_email='cfaist@heroku.com',
     url='https://github.com/heroku-python/bob-builder',
     packages=['bob'],
     license='MIT',
