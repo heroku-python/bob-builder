@@ -10,13 +10,13 @@ deps = [
 
 setup(
     name='bob-builder',
-    version='0.0.13',
+    version='0.0.14',
     install_requires=deps,
     description='Binary Build Toolkit.',
     # long_description='Meh.',/
-    author='Kenneth Reitz',
-    author_email='kenneth@heroku.com',
-    url='https://github.com/kennethreitz/bob-builder',
+    author='Heroku',
+    author_email='cfaist@heroku.com',
+    url='https://github.com/heroku-python/bob-builder',
     packages=['bob'],
     license='MIT',
     entry_points={
