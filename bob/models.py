@@ -36,9 +36,10 @@ sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
 class Formula(object):
 
-    def __init__(self, path):
+    def __init__(self, path, override_path=None):
         self.path = path
         self.archived_path = None
+        self.override_path = override_path
 
         if not S3_BUCKET:
             print_stderr('The environment variable S3_BUCKET must be set to the bucket name.')
@@ -135,7 +136,11 @@ class Formula(object):
         print('Building formula {} in {}:\n'.format(self.path, cwd_path))
 
         # Execute the formula script.
-        p = process(["/usr/bin/env", "bash", "--", self.full_path, self.build_path], cwd=cwd_path)
+        args = ["/usr/bin/env", "bash", "--", self.full_path, self.build_path]
+        if self.override_path:
+            args.append(self.override_path)
+
+        p = process(args, cwd=cwd_path)
 
         pipe(p.stdout, sys.stdout, indent=True)
         p.wait()
@@ -162,7 +167,13 @@ class Formula(object):
             print_stderr('Deploy requires valid AWS credentials.')
             sys.exit(1)
 
-        key_name = '{}{}.tar.gz'.format(S3_PREFIX, self.path)
+        if override_name != None:
+            name = self.override_path
+        else:
+            name = self.path
+
+        key_name = '{}{}.tar.gz'.format(S3_PREFIX, name)
+
         key = self.bucket.get_key(key_name)
 
         if key:
