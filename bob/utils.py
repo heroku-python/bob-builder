@@ -11,6 +11,8 @@ from subprocess import Popen, PIPE, STDOUT
 import boto
 from boto.exception import NoAuthHandlerFound, S3ResponseError
 
+from distutils.version import LooseVersion
+from fnmatch import fnmatchcase
 
 def print_stderr(message, prefix='ERROR'):
     print('\n{}: {}\n'.format(prefix, message), file=sys.stderr)
@@ -70,6 +72,21 @@ def extract_tree(archive, dir):
     with tarfile.open(archive, 'r:gz') as tar:
         tar.extractall(dir)
 
+# get a key, or the highest matching (as in software version) key if it contains wildcards
+# e.g. get_with_wildcard("foobar/dep-1.2.3") fetches that version
+# e.g. get_with_wildcard("foobar/dep-1.2.*") fetches the "latest" matching
+def get_with_wildcard(bucket, name):
+    parts = name.partition("*")
+    
+    if not parts[1]: # no "*" in name
+        return bucket.get_key(name)
+    
+    firstparts = bucket.list(parts[0]) # use anything before "*" as the prefix for S3 listing
+    matches = [i for i in firstparts if fnmatchcase(i.name, name)] # fnmatch against found keys in S3
+    
+    matches.sort(key=lambda dep: LooseVersion(dep.name), reverse=True)
+    
+    return next(iter(matches), None) # return first item or None
 
 class S3ConnectionHandler(object):
     """
