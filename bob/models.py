@@ -9,7 +9,7 @@ import sys
 from tempfile import mkstemp, mkdtemp
 
 from .utils import (
-    archive_tree, extract_tree, iter_marker_lines, mkdir_p,
+    archive_tree, extract_tree, get_with_wildcard, iter_marker_lines, mkdir_p,
     pipe, print_stderr, process, S3ConnectionHandler)
 
 
@@ -100,12 +100,12 @@ class Formula(object):
                 print('  - {}'.format(dep))
 
                 key_name = '{}{}.tar.gz'.format(S3_PREFIX, dep)
-                key = self.bucket.get_key(key_name)
+                key = get_with_wildcard(self.bucket, key_name)
 
                 if not key and self.upstream:
                     print('    Not found in S3_BUCKET, trying UPSTREAM_S3_BUCKET...')
                     key_name = '{}{}.tar.gz'.format(UPSTREAM_S3_PREFIX, dep)
-                    key = self.upstream.get_key(key_name)
+                    key = get_with_wildcard(self.upstream, key_name)
 
                 if not key:
                     print_stderr('Archive {} does not exist.\n'
