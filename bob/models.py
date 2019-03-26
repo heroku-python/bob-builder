@@ -135,7 +135,8 @@ class Formula(object):
         print('Building formula {} in {}:\n'.format(self.path, cwd_path))
 
         # Execute the formula script.
-        p = process(["/usr/bin/env", "bash", "-c", self.full_path, self.build_path], cwd=cwd_path)
+        cmd = [self.full_path, self.build_path]
+        p = process(cmd, cwd=cwd_path)
 
         pipe(p.stdout, sys.stdout, indent=True)
         p.wait()
