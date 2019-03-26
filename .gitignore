@@ -1,4 +1,6 @@
 *.py[cod]
 *.egg-info/
 build/
+builds/
 dist/
+src/

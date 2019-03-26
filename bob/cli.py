@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
-"""Usage: bob build <formula>
-       bob deploy <formula> [--overwrite]
+"""Usage: bob build <formula> [--name=FILE]
+       bob deploy <formula> [--overwrite] [--name=<FILE>]
 
 Build formula and optionally deploy it.
 
 Options:
     -h --help
     --overwrite  allow overwriting of deployed archives.
+    --name=<path>  allow separate name for the archived output
 
 Configuration:
     Environment Variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET, S3_PREFIX (optional), UPSTREAM_S3_BUCKET (optional), UPSTREAM_S3_PREFIX (optional)
@@ -21,8 +22,8 @@ from .models import Formula
 from .utils import print_stderr
 
 
-def build(formula):
-    f = Formula(path=formula)
+def build(formula, name):
+    f = Formula(path=formula, override_path=name)
 
     try:
         assert f.exists
@@ -36,8 +37,8 @@ def build(formula):
     return f
 
 
-def deploy(formula, overwrite):
-    f = build(formula)
+def deploy(formula, overwrite, name):
+    f = build(formula, name)
 
     print('Archiving.')
     f.archive()
@@ -53,12 +54,13 @@ def main():
     do_build = args['build']
     do_deploy = args['deploy']
     do_overwrite = args['--overwrite']
+    do_name = args['--name']
 
     if do_build:
-        build(formula)
+        build(formula, name=do_name)
 
     if do_deploy:
-        deploy(formula, overwrite=do_overwrite)
+        deploy(formula, overwrite=do_overwrite, name=do_name)
 
 
 def dispatch():
