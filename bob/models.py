@@ -167,7 +167,7 @@ class Formula(object):
             print_stderr('Deploy requires valid AWS credentials.')
             sys.exit(1)
 
-        if override_name != None:
+        if self.override_path != None:
             name = self.override_path
         else:
             name = self.path
