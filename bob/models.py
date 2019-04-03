@@ -137,7 +137,7 @@ class Formula(object):
 
         # Execute the formula script.
         args = ["/usr/bin/env", "bash", "--", self.full_path, self.build_path]
-        if self.override_path:
+        if self.override_path != None:
             args.append(self.override_path)
 
         p = process(args, cwd=cwd_path)
