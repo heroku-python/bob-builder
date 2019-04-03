@@ -22,7 +22,7 @@ from .models import Formula
 from .utils import print_stderr
 
 
-def build(formula, name):
+def build(formula, name=None):
     f = Formula(path=formula, override_path=name)
 
     try:
