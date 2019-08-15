@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """Usage: bob build <formula> [--name=FILE]
+       bob archive <formula> [--overwrite] [--name=<FILE>]
        bob deploy <formula> [--overwrite] [--name=<FILE>]
 
 Build formula and optionally deploy it.
@@ -37,11 +38,17 @@ def build(formula, name=None):
     return f
 
 
-def deploy(formula, overwrite, name):
+def archive(formula, overwrite, name):
     f = build(formula, name)
 
     print('Archiving.')
     f.archive()
+
+    return f
+
+
+def deploy(formula, overwrite, name):
+    f = archive(formula, overwrite, name)
 
     print('Deploying.')
     f.deploy(allow_overwrite=overwrite)
@@ -52,12 +59,16 @@ def main():
 
     formula = args['<formula>']
     do_build = args['build']
+    do_archive = args['archive']
     do_deploy = args['deploy']
     do_overwrite = args['--overwrite']
     do_name = args['--name']
 
     if do_build:
         build(formula, name=do_name)
+
+    if do_archive:
+        archive(formula, overwrite=do_overwrite, name=do_name)
 
     if do_deploy:
         deploy(formula, overwrite=do_overwrite, name=do_name)
