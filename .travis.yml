@@ -14,9 +14,3 @@ script:
   # TODO: Replace with an actual test suite:
   # https://github.com/kennethreitz/bob-builder/issues/31
   - bob --help
-matrix:
-  allow_failures:
-    - python: "3.4"
-    - python: "3.5"
-    - python: "3.6"
-  fast_finish: true

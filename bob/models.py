@@ -7,10 +7,11 @@ import re
 import shutil
 import sys
 from tempfile import mkstemp, mkdtemp
+from subprocess import Popen, STDOUT
 
 from .utils import (
     archive_tree, extract_tree, get_with_wildcard, iter_marker_lines, mkdir_p,
-    pipe, print_stderr, process, S3ConnectionHandler)
+    print_stderr, S3ConnectionHandler)
 
 
 WORKSPACE = os.environ.get('WORKSPACE_DIR', 'workspace')
@@ -28,11 +29,6 @@ if UPSTREAM_S3_PREFIX and not UPSTREAM_S3_PREFIX.endswith('/'):
 
 DEPS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
-
-# Make stdin/out as unbuffered as possible via file descriptor modes.
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
-
 
 class Formula(object):
 
@@ -140,9 +136,8 @@ class Formula(object):
         if self.override_path != None:
             args.append(self.override_path)
 
-        p = process(args, cwd=cwd_path)
+        p = Popen(args, cwd=cwd_path, shell=False, stderr=STDOUT)
 
-        pipe(p.stdout, sys.stdout, indent=True)
         p.wait()
 
         if p.returncode != 0:

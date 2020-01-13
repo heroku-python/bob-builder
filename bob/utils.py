@@ -6,7 +6,6 @@ import errno
 import os
 import sys
 import tarfile
-from subprocess import Popen, PIPE, STDOUT
 
 import boto
 from boto.exception import NoAuthHandlerFound, S3ResponseError
@@ -40,23 +39,6 @@ def mkdir_p(path):
             pass
         else:
             raise
-
-
-def process(cmd, cwd=None):
-    """A simple wrapper around the subprocess module; stderr is redirected to stdout."""
-    p = Popen(cmd, cwd=cwd, shell=False, stdout=PIPE, stderr=STDOUT)
-    return p
-
-
-def pipe(a, b, indent=True):
-    """Pipes stream A to stream B, with optional indentation."""
-
-    for line in iter(a.readline, b''):
-
-        if indent:
-            b.write('    ')
-
-        b.write(line)
 
 
 def archive_tree(dir, archive):
