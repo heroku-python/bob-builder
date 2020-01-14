@@ -13,8 +13,8 @@ from boto.exception import NoAuthHandlerFound, S3ResponseError
 from distutils.version import LooseVersion
 from fnmatch import fnmatchcase
 
-def print_stderr(message, prefix='ERROR'):
-    print('\n{}: {}\n'.format(prefix, message), file=sys.stderr)
+def print_stderr(message='', title=''):
+    print(('\n{1}: {0}\n' if title else '{0}').format(message, title), file=sys.stderr)
 
 
 def iter_marker_lines(marker, formula, strip=True):
@@ -86,7 +86,7 @@ class S3ConnectionHandler(object):
             self.s3 = boto.connect_s3()
         except NoAuthHandlerFound:
             print_stderr('No AWS credentials found. Requests will be made without authentication.',
-                         prefix='WARNING')
+                         title='WARNING')
             self.s3 = boto.connect_s3(anon=True)
 
     def get_bucket(self, name):
@@ -94,8 +94,8 @@ class S3ConnectionHandler(object):
             return self.s3.get_bucket(name)
         except S3ResponseError as e:
             if e.status == 403 and not self.s3.anon:
-                print('Access denied for bucket "{}" using found credentials. '
-                      'Retrying as an anonymous user.'.format(name))
+                print_stderr('Access denied for bucket "{}" using found credentials. '
+                             'Retrying as an anonymous user.'.format(name), title='NOTICE')
                 if not hasattr(self, 's3_anon'):
                     self.s3_anon = boto.connect_s3(anon=True)
                 return self.s3_anon.get_bucket(name)
