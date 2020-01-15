@@ -3,6 +3,7 @@
 import os
 import re
 import shutil
+import signal
 import sys
 from tempfile import mkstemp, mkdtemp
 from subprocess import Popen
@@ -138,9 +139,18 @@ class Formula(object):
 
         p.wait()
 
-        if p.returncode != 0:
+        if p.returncode > 0:
             print_stderr('Formula exited with return code {}.'.format(p.returncode), title='ERROR')
             sys.exit(1)
+        elif p.returncode < 0: # script was terminated by signal number abs(returncode)
+            signum = abs(p.returncode)
+            try:
+                # Python 3.5+
+                signame = signal.Signals(signum).name
+            except AttributeError:
+                signame = signum
+            print_stderr('Formula terminated by signal {}.'.format(signame), title='ERROR')
+            sys.exit(128+signum) # best we can do, given how we weren't terminated ourselves with the same signal (maybe we're PID 1, maybe another reason)
 
         print_stderr('\nBuild complete: {}'.format(self.build_path))
 
