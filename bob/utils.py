@@ -6,7 +6,6 @@ import errno
 import os
 import sys
 import tarfile
-from subprocess import Popen, PIPE, STDOUT
 
 import boto
 from boto.exception import NoAuthHandlerFound, S3ResponseError
@@ -14,8 +13,8 @@ from boto.exception import NoAuthHandlerFound, S3ResponseError
 from distutils.version import LooseVersion
 from fnmatch import fnmatchcase
 
-def print_stderr(message, prefix='ERROR'):
-    print('\n{}: {}\n'.format(prefix, message), file=sys.stderr)
+def print_stderr(message='', title=''):
+    print(('\n{1}: {0}\n' if title else '{0}').format(message, title), file=sys.stderr)
 
 
 def iter_marker_lines(marker, formula, strip=True):
@@ -40,23 +39,6 @@ def mkdir_p(path):
             pass
         else:
             raise
-
-
-def process(cmd, cwd=None):
-    """A simple wrapper around the subprocess module; stderr is redirected to stdout."""
-    p = Popen(cmd, cwd=cwd, shell=False, stdout=PIPE, stderr=STDOUT)
-    return p
-
-
-def pipe(a, b, indent=True):
-    """Pipes stream A to stream B, with optional indentation."""
-
-    for line in iter(a.readline, b''):
-
-        if indent:
-            b.write('    ')
-
-        b.write(line)
 
 
 def archive_tree(dir, archive):
@@ -104,7 +86,7 @@ class S3ConnectionHandler(object):
             self.s3 = boto.connect_s3()
         except NoAuthHandlerFound:
             print_stderr('No AWS credentials found. Requests will be made without authentication.',
-                         prefix='WARNING')
+                         title='WARNING')
             self.s3 = boto.connect_s3(anon=True)
 
     def get_bucket(self, name):
@@ -112,8 +94,8 @@ class S3ConnectionHandler(object):
             return self.s3.get_bucket(name)
         except S3ResponseError as e:
             if e.status == 403 and not self.s3.anon:
-                print('Access denied for bucket "{}" using found credentials. '
-                      'Retrying as an anonymous user.'.format(name))
+                print_stderr('Access denied for bucket "{}" using found credentials. '
+                             'Retrying as an anonymous user.'.format(name), title='NOTICE')
                 if not hasattr(self, 's3_anon'):
                     self.s3_anon = boto.connect_s3(anon=True)
                 return self.s3_anon.get_bucket(name)

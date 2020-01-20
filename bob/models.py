@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-
 import os
 import re
 import shutil
+import signal
 import sys
 from tempfile import mkstemp, mkdtemp
+from subprocess import Popen
 
 from .utils import (
     archive_tree, extract_tree, get_with_wildcard, iter_marker_lines, mkdir_p,
-    pipe, print_stderr, process, S3ConnectionHandler)
+    print_stderr, S3ConnectionHandler)
 
 
 WORKSPACE = os.environ.get('WORKSPACE_DIR', 'workspace')
@@ -29,11 +29,6 @@ if UPSTREAM_S3_PREFIX and not UPSTREAM_S3_PREFIX.endswith('/'):
 DEPS_MARKER = '# Build Deps: '
 BUILD_PATH_MARKER = '# Build Path: '
 
-# Make stdin/out as unbuffered as possible via file descriptor modes.
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
-
-
 class Formula(object):
 
     def __init__(self, path, override_path=None):
@@ -42,7 +37,7 @@ class Formula(object):
         self.override_path = override_path
 
         if not S3_BUCKET:
-            print_stderr('The environment variable S3_BUCKET must be set to the bucket name.')
+            print_stderr('The environment variable S3_BUCKET must be set to the bucket name.', title='ERROR')
             sys.exit(1)
 
         s3 = S3ConnectionHandler()
@@ -95,22 +90,22 @@ class Formula(object):
         deps = self.depends_on
 
         if deps:
-            print('Fetching dependencies... found {}:'.format(len(deps)))
+            print_stderr('Fetching dependencies... found {}:'.format(len(deps)))
 
             for dep in deps:
-                print('  - {}'.format(dep))
+                print_stderr('  - {}'.format(dep))
 
                 key_name = '{}{}.tar.gz'.format(S3_PREFIX, dep)
                 key = get_with_wildcard(self.bucket, key_name)
 
                 if not key and self.upstream:
-                    print('    Not found in S3_BUCKET, trying UPSTREAM_S3_BUCKET...')
+                    print_stderr('    Not found in S3_BUCKET, trying UPSTREAM_S3_BUCKET...')
                     key_name = '{}{}.tar.gz'.format(UPSTREAM_S3_PREFIX, dep)
                     key = get_with_wildcard(self.upstream, key_name)
 
                 if not key:
                     print_stderr('Archive {} does not exist.\n'
-                                 'Please deploy it to continue.'.format(key_name))
+                                 'Please deploy it to continue.'.format(key_name), title='ERROR')
                     sys.exit(1)
 
                 # Grab the Dep from S3, download it to a temp file.
@@ -120,7 +115,7 @@ class Formula(object):
                 # Extract the Dep to the appropriate location.
                 extract_tree(archive, self.build_path)
 
-            print()
+            print_stderr()
 
     def build(self):
         # Prepare build directory.
@@ -133,30 +128,38 @@ class Formula(object):
         # Temporary directory where work will be carried out, because of David.
         cwd_path = mkdtemp(prefix='bob-')
 
-        print('Building formula {} in {}:\n'.format(self.path, cwd_path))
+        print_stderr('Building formula {} in {}:\n'.format(self.path, cwd_path))
 
         # Execute the formula script.
         args = ["/usr/bin/env", "bash", "--", self.full_path, self.build_path]
         if self.override_path != None:
             args.append(self.override_path)
 
-        p = process(args, cwd=cwd_path)
+        p = Popen(args, cwd=cwd_path, shell=False, stderr=sys.stdout.fileno()) # we have to pass sys.stdout.fileno(), because subprocess.STDOUT will not do what we want on older versions: https://bugs.python.org/issue22274
 
-        pipe(p.stdout, sys.stdout, indent=True)
         p.wait()
 
-        if p.returncode != 0:
-            print_stderr('Formula exited with return code {}.'.format(p.returncode))
+        if p.returncode > 0:
+            print_stderr('Formula exited with return code {}.'.format(p.returncode), title='ERROR')
             sys.exit(1)
+        elif p.returncode < 0: # script was terminated by signal number abs(returncode)
+            signum = abs(p.returncode)
+            try:
+                # Python 3.5+
+                signame = signal.Signals(signum).name
+            except AttributeError:
+                signame = signum
+            print_stderr('Formula terminated by signal {}.'.format(signame), title='ERROR')
+            sys.exit(128+signum) # best we can do, given how we weren't terminated ourselves with the same signal (maybe we're PID 1, maybe another reason)
 
-        print('\nBuild complete: {}'.format(self.build_path))
+        print_stderr('\nBuild complete: {}'.format(self.build_path))
 
     def archive(self):
         """Archives the build directory as a tar.gz."""
         archive = mkstemp(prefix='bob-build-', suffix='.tar.gz')[1]
         archive_tree(self.build_path, archive)
 
-        print('Created: {}'.format(archive))
+        print_stderr('Created: {}'.format(archive))
         self.archived_path = archive
 
     def deploy(self, allow_overwrite=False):
@@ -164,7 +167,7 @@ class Formula(object):
         assert self.archived_path
 
         if self.bucket.connection.anon:
-            print_stderr('Deploy requires valid AWS credentials.')
+            print_stderr('Deploy requires valid AWS credentials.', title='ERROR')
             sys.exit(1)
 
         if self.override_path != None:
@@ -179,16 +182,16 @@ class Formula(object):
         if key:
             if not allow_overwrite:
                 print_stderr('Archive {} already exists.\n'
-                             'Use the --overwrite flag to continue.'.format(key_name))
+                             'Use the --overwrite flag to continue.'.format(key_name), title='ERROR')
                 sys.exit(1)
         else:
             key = self.bucket.new_key(key_name)
 
         url = key.generate_url(0, query_auth=False)
-        print('Uploading to: {}'.format(url))
+        print_stderr('Uploading to: {}'.format(url))
 
         # Upload the archive, set permissions.
         key.set_contents_from_filename(self.archived_path)
         key.set_acl('public-read')
 
-        print('Upload complete!')
+        print_stderr('Upload complete!')
