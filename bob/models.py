@@ -192,6 +192,5 @@ class Formula(object):
 
         # Upload the archive, set permissions.
         key.set_contents_from_filename(self.archived_path)
-        key.set_acl('public-read')
 
         print_stderr('Upload complete!')
