@@ -4,7 +4,7 @@
 from setuptools import setup
 
 deps = [
-    'boto',
+    'boto3',
     'docopt',
 ]
 

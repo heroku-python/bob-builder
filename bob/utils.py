@@ -7,11 +7,17 @@ import os
 import sys
 import tarfile
 
-import boto
-from boto.exception import NoAuthHandlerFound, S3ResponseError
+import boto3
+from botocore import UNSIGNED
+from botocore.config import Config
+from botocore.exceptions import ClientError, NoCredentialsError
 
 from distutils.version import LooseVersion
 from fnmatch import fnmatchcase
+
+from collections import namedtuple
+
+Bucket = namedtuple('Bucket', ['bucket', 'anon'], defaults=[False])
 
 def print_stderr(message='', title=''):
     print(('\n{1}: {0}\n' if title else '{0}').format(message, title), file=sys.stderr)
@@ -74,20 +80,28 @@ def extract_tree(archive, dir):
         safe_extract(tar, dir)
 
 # get a key, or the highest matching (as in software version) key if it contains wildcards
-# e.g. get_with_wildcard("foobar/dep-1.2.3") fetches that version
-# e.g. get_with_wildcard("foobar/dep-1.2.*") fetches the "latest" matching
+# e.g. get_with_wildcard("foobar/dep-1.2.3.tar.gz") fetches that version
+# e.g. get_with_wildcard("foobar/dep-1.2.*.tar.gz") fetches the "latest" matching
 def get_with_wildcard(bucket, name):
     parts = name.partition("*")
     
     if not parts[1]: # no "*" in name
-        return bucket.get_key(name)
+        ret = bucket.Object(name)
+        try:
+            ret.load()
+            return ret
+        except ClientError as e:
+            if e.response['Error']['Code'] == "404":
+                return None
+            raise
     
-    firstparts = bucket.list(parts[0]) # use anything before "*" as the prefix for S3 listing
-    matches = [i for i in firstparts if fnmatchcase(i.name, name)] # fnmatch against found keys in S3
-    
-    matches.sort(key=lambda dep: LooseVersion(dep.name), reverse=True)
-    
-    return next(iter(matches), None) # return first item or None
+    firstparts = bucket.objects.filter(Prefix=parts[0]) # use anything before "*" as the prefix for S3 listing
+    matches = [i for i in firstparts if fnmatchcase(i.key, name)] # fnmatch entire name with wildcard against found keys in S3 - prefix for "dep-1.2.*.tar.gz" was "dep-1.2", but there might be a "dep-1.2.3.sig" or whatnot
+    try:
+        return sorted(matches, key=lambda dep: LooseVersion(dep.key)).pop().Object()
+    except IndexError:
+        # list was empty
+        return None
 
 class S3ConnectionHandler(object):
     """
@@ -97,25 +111,49 @@ class S3ConnectionHandler(object):
     boto finds in the environment don't permit access to the bucket, or when boto was
     unable to find any credentials at all.
 
-    Returns a boto S3Connection object.
+    Returns a named tuple containing a boto3 Bucket resource object and an anonymous mode indicator.
     """
 
+    buckets = {}
+    all_anon = True
+
     def __init__(self):
+        sts = boto3.client('sts')
         try:
-            self.s3 = boto.connect_s3()
-        except NoAuthHandlerFound:
+            sts.get_caller_identity()
+            self.all_anon = False
+        except NoCredentialsError:
             print_stderr('No AWS credentials found. Requests will be made without authentication.',
                          title='WARNING')
-            self.s3 = boto.connect_s3(anon=True)
 
-    def get_bucket(self, name):
+    def get_bucket(self, name, region_name=None, force_anon=False):
+        if name in self.buckets:
+            return self.buckets[name]
+
+        if self.all_anon:
+            force_anon = True
+
+        config = Config(region_name=region_name, s3={'us_east_1_regional_endpoint': 'regional'})
+        if force_anon:
+            config.signature_version = UNSIGNED
+
+        s3 = boto3.resource('s3', config=config)
+
         try:
-            return self.s3.get_bucket(name)
-        except S3ResponseError as e:
-            if e.status == 403 and not self.s3.anon:
-                print_stderr('Access denied for bucket "{}" using found credentials. '
-                             'Retrying as an anonymous user.'.format(name), title='NOTICE')
-                if not hasattr(self, 's3_anon'):
-                    self.s3_anon = boto.connect_s3(anon=True)
-                return self.s3_anon.get_bucket(name)
-            raise
+            # see if the bucket exists
+            s3.meta.client.head_bucket(Bucket=name)
+        except ClientError as e:
+            if e.response['Error']['Code'] == "403":
+                # we got a 403 on the HEAD request, but that doesn't mean we don't have access at all
+                # just that we cannot perform a HEAD
+                # if we're currently authenticated, then we fall back to anonymous, since we'll just want to try GETs on objects and bucket listings
+                # otherwise, we'll just have to bubble through to the end, and see what happens on subsequent GETs
+                if not force_anon:
+                    print_stderr('Access denied for bucket "{}" using found credentials. '
+                                 'Retrying as an anonymous user.'.format(name), title='NOTICE')
+                    return self.get_bucket(name, region_name=region_name, force_anon=True)
+            else:
+                raise
+
+        self.buckets[name] = Bucket(s3.Bucket(name), anon=force_anon)
+        return self.buckets[name]
