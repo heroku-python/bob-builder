@@ -6,6 +6,7 @@ from setuptools import setup
 deps = [
     'boto3',
     'docopt',
+    'natsort',
 ]
 
 setup(

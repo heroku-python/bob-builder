@@ -12,8 +12,8 @@ from botocore import UNSIGNED
 from botocore.config import Config
 from botocore.exceptions import ClientError, NoCredentialsError
 
-from distutils.version import LooseVersion
 from fnmatch import fnmatchcase
+from natsort import natsorted
 
 from collections import namedtuple
 
@@ -97,8 +97,9 @@ def get_with_wildcard(bucket, name):
     
     firstparts = bucket.objects.filter(Prefix=parts[0]) # use anything before "*" as the prefix for S3 listing
     matches = [i for i in firstparts if fnmatchcase(i.key, name)] # fnmatch entire name with wildcard against found keys in S3 - prefix for "dep-1.2.*.tar.gz" was "dep-1.2", but there might be a "dep-1.2.3.sig" or whatnot
+    # natsorted will sort correctly by version parts, even if the element is something like "dep-1.2.3.tar.gz"
     try:
-        return sorted(matches, key=lambda dep: LooseVersion(dep.key)).pop().Object()
+        return natsorted(matches, key=lambda dep: dep.key).pop().Object()
     except IndexError:
         # list was empty
         return None
