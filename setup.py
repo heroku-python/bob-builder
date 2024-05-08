@@ -11,7 +11,7 @@ deps = [
 
 setup(
     name='bob-builder',
-    version='0.0.19',
+    version='0.0.20',
     install_requires=deps,
     description='Binary Build Toolkit.',
     # long_description='Meh.',/
