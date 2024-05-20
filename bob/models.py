@@ -7,6 +7,9 @@ import signal
 import sys
 from tempfile import mkstemp, mkdtemp
 from subprocess import Popen
+from urllib.parse import urlsplit
+
+from botocore.exceptions import ClientError
 
 from .utils import (
     archive_tree, extract_tree, get_with_wildcard, iter_marker_lines, mkdir_p,
@@ -17,8 +20,10 @@ WORKSPACE = os.environ.get('WORKSPACE_DIR', 'workspace')
 DEFAULT_BUILD_PATH = os.environ.get('DEFAULT_BUILD_PATH', '/app/.heroku/')
 S3_BUCKET = os.environ.get('S3_BUCKET')
 S3_PREFIX = os.environ.get('S3_PREFIX', '')
+S3_REGION = os.environ.get('S3_REGION')
 UPSTREAM_S3_BUCKET = os.environ.get('UPSTREAM_S3_BUCKET')
 UPSTREAM_S3_PREFIX = os.environ.get('UPSTREAM_S3_PREFIX', '')
+UPSTREAM_S3_REGION = os.environ.get('UPSTREAM_S3_REGION')
 
 # Append a slash for backwards compatibility.
 if S3_PREFIX and not S3_PREFIX.endswith('/'):
@@ -41,8 +46,8 @@ class Formula(object):
             sys.exit(1)
 
         s3 = S3ConnectionHandler()
-        self.bucket = s3.get_bucket(S3_BUCKET)
-        self.upstream = s3.get_bucket(UPSTREAM_S3_BUCKET) if UPSTREAM_S3_BUCKET else None
+        self.bucket = s3.get_bucket(S3_BUCKET, region_name=S3_REGION)
+        self.upstream = s3.get_bucket(UPSTREAM_S3_BUCKET, region_name=UPSTREAM_S3_REGION) if UPSTREAM_S3_BUCKET else None
 
     def __repr__(self):
         return '<Formula {}>'.format(self.path)
@@ -96,12 +101,12 @@ class Formula(object):
                 print_stderr('  - {}'.format(dep))
 
                 key_name = '{}{}.tar.gz'.format(S3_PREFIX, dep)
-                key = get_with_wildcard(self.bucket, key_name)
+                key = get_with_wildcard(self.bucket.bucket, key_name)
 
                 if not key and self.upstream:
                     print_stderr('    Not found in S3_BUCKET, trying UPSTREAM_S3_BUCKET...')
                     key_name = '{}{}.tar.gz'.format(UPSTREAM_S3_PREFIX, dep)
-                    key = get_with_wildcard(self.upstream, key_name)
+                    key = get_with_wildcard(self.upstream.bucket, key_name)
 
                 if not key:
                     print_stderr('Archive {} does not exist.\n'
@@ -110,7 +115,7 @@ class Formula(object):
 
                 # Grab the Dep from S3, download it to a temp file.
                 archive = mkstemp(prefix='bob-dep-', suffix='.tar.gz')[1]
-                key.get_contents_to_filename(archive)
+                key.download_file(archive)
 
                 # Extract the Dep to the appropriate location.
                 extract_tree(archive, self.build_path)
@@ -166,7 +171,7 @@ class Formula(object):
         """Deploys the formula's archive to S3."""
         assert self.archived_path
 
-        if self.bucket.connection.anon:
+        if self.bucket.anon:
             print_stderr('Deploy requires valid AWS credentials.', title='ERROR')
             sys.exit(1)
 
@@ -177,20 +182,22 @@ class Formula(object):
 
         key_name = '{}{}.tar.gz'.format(S3_PREFIX, name)
 
-        key = self.bucket.get_key(key_name)
-
-        if key:
+        target = self.bucket.bucket.Object(key_name)
+        try:
+            target.load()
             if not allow_overwrite:
                 print_stderr('Archive {} already exists.\n'
-                             'Use the --overwrite flag to continue.'.format(key_name), title='ERROR')
+                             'Use the --overwrite flag to continue.'.format(target.key), title='ERROR')
                 sys.exit(1)
-        else:
-            key = self.bucket.new_key(key_name)
+        except ClientError as e:
+            if e.response['Error']['Code'] != "404":
+                raise
 
-        url = key.generate_url(0, query_auth=False)
-        print_stderr('Uploading to: {}'.format(url))
+        url = target.meta.client.generate_presigned_url('get_object', Params={'Bucket': target.bucket_name, 'Key': target.key})
+        # boto can only generate URLs with expiry, so we're splitting off the signature part, as our URLs are always expected to be public
+        print_stderr('Uploading to: {}'.format(urlsplit(url)._replace(query=None).geturl()))
 
-        # Upload the archive, set permissions.
-        key.set_contents_from_filename(self.archived_path)
+        # Upload the archive
+        target.upload_file(self.archived_path)
 
         print_stderr('Upload complete!')
